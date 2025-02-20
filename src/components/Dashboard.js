@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { getDatabase, ref, push, onValue } from "firebase/database";
+import { getDatabase, ref, get, push, onValue } from "firebase/database";
 import { useNavigate } from "react-router-dom";
 import styled, { keyframes, createGlobalStyle } from "styled-components";
 import "../firebase/firebaseConfig";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 // Global Styles
 const GlobalStyle = createGlobalStyle`
@@ -74,9 +76,9 @@ const Title = styled.h1`
   color: transparent;
   margin: 0;
   position: relative;
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     bottom: -8px;
@@ -114,14 +116,44 @@ const Input = styled.input`
   transition: all 0.3s ease;
   outline: none;
   width: 100%;
-  
+
   &:focus {
     border-color: var(--secondary);
     box-shadow: 0 0 0 2px rgba(0, 194, 255, 0.25);
   }
-  
+
   &::placeholder {
     color: rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const Select = styled.select`
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--light);
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  outline: none;
+  width: 100%;
+  appearance: none; /* Removes default styling */
+
+  /* Custom dropdown arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255, 255, 255, 0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+
+  &:focus {
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 2px rgba(0, 194, 255, 0.25);
+  }
+
+  /* Styling for the options */
+  option {
+    background: #1a1a1a; /* Dark background for options */
+    color: var(--light);
+    padding: 12px;
   }
 `;
 
@@ -136,12 +168,12 @@ const Button = styled.button`
   cursor: pointer;
   transition: all 0.3s ease;
   animation: ${pulseBackground} 3s infinite;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   }
-  
+
   &:active {
     transform: translateY(1px);
   }
@@ -184,7 +216,7 @@ const StatusColumn = styled.div`
   display: flex;
   flex-direction: column;
   animation: ${slideIn} 0.5s ease-out;
-  animation-delay: ${props => props.index * 0.1}s;
+  animation-delay: ${(props) => props.index * 0.1}s;
   animation-fill-mode: both;
 `;
 
@@ -198,20 +230,25 @@ const ColumnHeader = styled.h2`
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   &::before {
-    content: '';
+    content: "";
     display: block;
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: ${props => {
+    background: ${(props) => {
       switch (props.status) {
-        case 'Pending': return 'var(--warning)';
-        case 'Assigned': return 'var(--secondary)';
-        case 'Escalated': return 'var(--danger)';
-        case 'Resolved': return 'var(--success)';
-        default: return 'var(--primary)';
+        case "Pending":
+          return "var(--warning)";
+        case "Assigned":
+          return "var(--secondary)";
+        case "Escalated":
+          return "var(--danger)";
+        case "Resolved":
+          return "var(--success)";
+        default:
+          return "var(--primary)";
       }
     }};
   }
@@ -230,40 +267,56 @@ const TicketCard = styled.div`
   border-radius: 12px;
   padding: 16px;
   transition: all 0.3s ease;
-  border-left: 3px solid ${props => {
-    switch (props.status) {
-      case 'Pending': return 'var(--warning)';
-      case 'Assigned': return 'var(--secondary)';
-      case 'Escalated': return 'var(--danger)';
-      case 'Resolved': return 'var(--success)';
-      default: return 'var(--primary)';
-    }
-  }};
+  border-left: 3px solid
+    ${(props) => {
+      switch (props.status) {
+        case "Pending":
+          return "var(--warning)";
+        case "Assigned":
+          return "var(--secondary)";
+        case "Escalated":
+          return "var(--danger)";
+        case "Resolved":
+          return "var(--success)";
+        default:
+          return "var(--primary)";
+      }
+    }};
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  
+
   &:hover {
     transform: translateY(-4px);
     background: rgba(255, 255, 255, 0.07);
   }
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     right: 0;
     width: 30px;
     height: 30px;
-    background: linear-gradient(135deg, transparent 50%, ${props => {
-      switch (props.status) {
-        case 'Pending': return 'var(--warning)';
-        case 'Assigned': return 'var(--secondary)';
-        case 'Escalated': return 'var(--danger)';
-        case 'Resolved': return 'var(--success)';
-        default: return 'var(--primary)';
-      }
-    }} 50%);
+    background: linear-gradient(
+      135deg,
+      transparent 50%,
+      ${(props) => {
+          switch (props.status) {
+            case "Pending":
+              return "var(--warning)";
+            case "Assigned":
+              return "var(--secondary)";
+            case "Escalated":
+              return "var(--danger)";
+            case "Resolved":
+              return "var(--success)";
+            default:
+              return "var(--primary)";
+          }
+        }}
+        50%
+    );
     border-bottom-left-radius: 8px;
   }
 `;
@@ -304,15 +357,15 @@ const PulseIcon = styled.span`
   width: 8px;
   height: 8px;
   margin-right: 5px;
-  
+
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: ${props => props.color || 'var(--primary)'};
+    background-color: ${(props) => props.color || "var(--primary)"};
     border-radius: 50%;
     animation: ${glow} 2s infinite;
   }
@@ -321,52 +374,189 @@ const PulseIcon = styled.span`
 // Icons component
 const Icons = {
   Search: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M21 21L16.65 16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M21 21L16.65 16.65"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   Calendar: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M16 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M8 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M3 10H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16 2V6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 2V6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3 10H21"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   Building: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M3 21H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M3 21H21"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   Globe: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M2 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22C9.49872 19.2616 8.07725 15.708 8 12C8.07725 8.29203 9.49872 4.73835 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M2 12H22"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22C9.49872 19.2616 8.07725 15.708 8 12C8.07725 8.29203 9.49872 4.73835 12 2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   User: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   Add: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12 5V19"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5 12H19"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
-  )
+  ),
 };
 
+//add departments here
+
+const departments = [
+  "Finance",
+  "Procurement",
+  "Risk Assessment",
+  "IT Support",
+  "Human Resources",
+  "Operations",
+];
+
 const Dashboard = () => {
-  const [newTicket, setNewTicket] = useState({ 
-    title: "", 
-    description: "", 
-    department: "", 
-    ipNumber: "" 
+  const [newTicket, setNewTicket] = useState({
+    title: "",
+    description: "",
+    department: "",
+    ipNumber: "",
   });
   const [tickets, setTickets] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -390,21 +580,152 @@ const Dashboard = () => {
     });
   }, [db]);
 
-  const handleAddTicket = () => {
-    if (newTicket.title && newTicket.description && newTicket.department && newTicket.ipNumber) {
-      push(ref(db, "tickets"), {
+  // IP-to-Email Mapping
+const ipToEmailMap = {
+  "2507": "linah@yahoo.co.ke",
+  "2399": "cindy@gmail.com",
+  // Add more mappings as needed
+};
+
+// Helper function to validate email format
+const isEmail = (input) => /\S+@\S+\.\S+/.test(input);
+
+const handleAddTicket = async () => {
+  if (
+    newTicket.title &&
+    newTicket.description &&
+    newTicket.department &&
+    newTicket.ipNumber
+  ) {
+    try {
+      console.log("Creating a new ticket with details:", newTicket);
+      let recipientEmail = newTicket.ipNumber;
+
+      // Check if the input is an IP number and map it to an email
+      if (ipToEmailMap[newTicket.ipNumber]) {
+        recipientEmail = ipToEmailMap[newTicket.ipNumber]; // Get mapped email
+      } else if (!isEmail(newTicket.ipNumber)) {
+        throw new Error("Invalid IP Number or Email");
+      }
+
+      console.log("Final recipient email:", recipientEmail);
+
+      // Push ticket to database
+      console.log("Pushing ticket to Firebase...");
+
+      
+      await push(ref(db, "tickets"), {
         title: newTicket.title,
         description: newTicket.description,
         department: newTicket.department,
-        ipNumber: newTicket.ipNumber,
+        ipNumber: newTicket.ipNumber, // Store IP or Email
         status: "Pending",
         timestamp: Date.now(),
       });
-      setNewTicket({ title: "", description: "", department: "", ipNumber: "" });
-    } else {
-      alert("Please fill in all fields: Title, Description, Department, and IP Number.");
+      console.log("Ticket successfully stored in firebase");
+
+      // Clear form
+      setNewTicket({
+        title: "",
+        description: "",
+        department: "",
+        ipNumber: "",
+      });
+
+      // Send email
+      console.log("sending email request to backend...");
+      const response = await fetch("http://localhost:5000/api/send-confirmation-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: recipientEmail,
+          title: newTicket.title,
+          description: newTicket.description,
+        }),
+      });
+
+      console.log("Email API response status: ", response.status);
+      const responseData = await response.json;
+      console.log("Email API response data: ", responseData)
+      
+      if (!response.ok) throw new Error("Failed to send confirmation email");
+
+      alert(`Ticket created successfully! Email sent to ${recipientEmail}`);
+    } catch (error) {
+      console.error("Error in handleAddTicket ", error)
+      alert(`Error: ${error.message}`);
     }
-  };
+  } else {
+    alert(
+      "Please fill in all fields: Title, Description, Department, and IP Number."
+    );
+  }
+};
+
+const handleDownloadTickets = async () => {
+  try {
+    const snapshot = await get(ref(db, "tickets"));
+
+    if (!snapshot.exists()) {
+      alert("No tickets found");
+      return;
+    }
+
+    const tickets = snapshot.val();
+    const ticketArray = Object.keys(tickets).map((key) => ({
+      ipNumber: tickets[key].ipNumber,
+      problem: tickets[key].title,
+      description: tickets[key].description,
+      status: tickets[key].status,
+    }));
+
+    // Group tickets by status
+    const groupedTickets = ticketArray.reduce((acc, ticket) => {
+      acc[ticket.status] = acc[ticket.status] || [];
+      acc[ticket.status].push(ticket);
+      return acc;
+    }, {});
+
+    // Generate PDF
+    generatePDF(groupedTickets);
+  } catch (error) {
+    alert("Error fetching tickets: " + error.message);
+  }
+};
+
+const generatePDF = (data) => {
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text("Tickets Report", 14, 15);
+
+  let yPos = 25;
+
+  Object.keys(data).forEach((status) => {
+    doc.setFontSize(14);
+    doc.text(`Status: ${status}`, 14, yPos);
+    yPos += 6;
+
+    const tableData = data[status].map((ticket) => [
+      ticket.ipNumber,
+      ticket.problem,
+      ticket.description,
+    ]);
+
+    doc.autoTable({
+      startY: yPos,
+      head: [["IP Phone", "Problem", "Description"]],
+      body: tableData,
+      theme: "grid",
+    });
+
+    yPos = doc.autoTable.previous.finalY + 10;
+  });
+
+  doc.save("tickets_report.pdf");
+};
+
+
+
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
@@ -417,6 +738,8 @@ const Dashboard = () => {
       <DashboardContainer>
         <Header>
           <Title>Helpdesk Command Center</Title>
+          <Button onClick={handleDownloadTickets}>
+            Download Tickets as PDF</Button>
         </Header>
 
         <FormSection>
@@ -426,25 +749,40 @@ const Dashboard = () => {
               type="text"
               placeholder="Ticket Title"
               value={newTicket.title}
-              onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
+              onChange={(e) =>
+                setNewTicket({ ...newTicket, title: e.target.value })
+              }
             />
             <Input
               type="text"
               placeholder="Description"
               value={newTicket.description}
-              onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+              onChange={(e) =>
+                setNewTicket({ ...newTicket, description: e.target.value })
+              }
             />
-            <Input
-              type="text"
-              placeholder="Department"
+            <Select
               value={newTicket.department}
-              onChange={(e) => setNewTicket({ ...newTicket, department: e.target.value })}
-            />
+              onChange={(e) =>
+                setNewTicket({ ...newTicket, department: e.target.value })
+              }
+            >
+              <option value="" disabled>
+                Select Department
+              </option>
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </Select>
             <Input
               type="text"
               placeholder="IP Number"
               value={newTicket.ipNumber}
-              onChange={(e) => setNewTicket({ ...newTicket, ipNumber: e.target.value })}
+              onChange={(e) =>
+                setNewTicket({ ...newTicket, ipNumber: e.target.value })
+              }
             />
           </FormGrid>
           <Button onClick={handleAddTicket}>
@@ -465,64 +803,79 @@ const Dashboard = () => {
         </SearchBar>
 
         <ColumnsContainer>
-          {["Pending", "Assigned", "Escalated", "Resolved"].map((status, index) => (
-            <StatusColumn key={status} index={index}>
-              <ColumnHeader status={status}>
-                {status}
-              </ColumnHeader>
-              <TicketList>
-                {tickets
-                  .filter((ticket) => {
-                    const matchesSearch = 
-                      (ticket.title && ticket.title.toLowerCase().includes(searchTerm)) ||
-                      (ticket.description && ticket.description.toLowerCase().includes(searchTerm)) ||
-                      (ticket.department && ticket.department.toLowerCase().includes(searchTerm)) ||
-                      (ticket.ipNumber && ticket.ipNumber.toLowerCase().includes(searchTerm));
-                
-                    return ticket.status === status && matchesSearch;
-                  })
-                  .map((ticket) => (
-                    <TicketCard 
-                      key={ticket.id} 
-                      status={status}
-                      onClick={() => navigate(`/ticket/${ticket.id}`)}
-                    >
-                      <TicketTitle>{ticket.title}</TicketTitle>
-                      <TicketDescription>{ticket.description}</TicketDescription>
-                      <TicketMeta>
-                        <MetaTag>
-                          <Icons.Building />
-                          {ticket.department}
-                        </MetaTag>
-                        <MetaTag>
-                          <Icons.Globe />
-                          {ticket.ipNumber}
-                        </MetaTag>
-                        {ticket.assignedTo && (
+          {["Pending", "Assigned", "Escalated", "Resolved"].map(
+            (status, index) => (
+              <StatusColumn key={status} index={index}>
+                <ColumnHeader status={status}>{status}</ColumnHeader>
+                <TicketList>
+                  {tickets
+                    .filter((ticket) => {
+                      const matchesSearch =
+                        (ticket.title &&
+                          ticket.title.toLowerCase().includes(searchTerm)) ||
+                        (ticket.description &&
+                          ticket.description
+                            .toLowerCase()
+                            .includes(searchTerm)) ||
+                        (ticket.department &&
+                          ticket.department
+                            .toLowerCase()
+                            .includes(searchTerm)) ||
+                        (ticket.ipNumber &&
+                          ticket.ipNumber.toLowerCase().includes(searchTerm));
+
+                      return ticket.status === status && matchesSearch;
+                    })
+                    .map((ticket) => (
+                      <TicketCard
+                        key={ticket.id}
+                        status={status}
+                        onClick={() => navigate(`/ticket/${ticket.id}`)}
+                      >
+                        <TicketTitle>{ticket.title}</TicketTitle>
+                        <TicketDescription>
+                          {ticket.description}
+                        </TicketDescription>
+                        <TicketMeta>
                           <MetaTag>
-                            <Icons.User />
-                            {ticket.assignedTo}
+                            <Icons.Building />
+                            {ticket.department}
                           </MetaTag>
-                        )}
-                        <MetaTag>
-                          <Icons.Calendar />
-                          {formatTimestamp(ticket.timestamp)}
-                        </MetaTag>
-                        <MetaTag>
-                          <PulseIcon color={
-                            status === "Pending" ? "var(--warning)" :
-                            status === "Assigned" ? "var(--secondary)" :
-                            status === "Escalated" ? "var(--danger)" :
-                            "var(--success)"
-                          } />
-                          {status}
-                        </MetaTag>
-                      </TicketMeta>
-                    </TicketCard>
-                  ))}
-              </TicketList>
-            </StatusColumn>
-          ))}
+                          <MetaTag>
+                            <Icons.Globe />
+                            {ticket.ipNumber}
+                          </MetaTag>
+                          {ticket.assignedTo && (
+                            <MetaTag>
+                              <Icons.User />
+                              {ticket.assignedTo}
+                            </MetaTag>
+                          )}
+                          <MetaTag>
+                            <Icons.Calendar />
+                            {formatTimestamp(ticket.timestamp)}
+                          </MetaTag>
+                          <MetaTag>
+                            <PulseIcon
+                              color={
+                                status === "Pending"
+                                  ? "var(--warning)"
+                                  : status === "Assigned"
+                                  ? "var(--secondary)"
+                                  : status === "Escalated"
+                                  ? "var(--danger)"
+                                  : "var(--success)"
+                              }
+                            />
+                            {status}
+                          </MetaTag>
+                        </TicketMeta>
+                      </TicketCard>
+                    ))}
+                </TicketList>
+              </StatusColumn>
+            )
+          )}
         </ColumnsContainer>
       </DashboardContainer>
     </>
