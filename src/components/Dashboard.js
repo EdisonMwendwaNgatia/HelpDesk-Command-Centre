@@ -610,10 +610,8 @@ const handleAddTicket = async () => {
 
       console.log("Final recipient email:", recipientEmail);
 
-      // Push ticket to database
+      // Push ticket to Firebase
       console.log("Pushing ticket to Firebase...");
-
-      
       await push(ref(db, "tickets"), {
         title: newTicket.title,
         description: newTicket.description,
@@ -622,7 +620,7 @@ const handleAddTicket = async () => {
         status: "Pending",
         timestamp: Date.now(),
       });
-      console.log("Ticket successfully stored in firebase");
+      console.log("Ticket successfully stored in Firebase");
 
       // Clear form
       setNewTicket({
@@ -632,8 +630,8 @@ const handleAddTicket = async () => {
         ipNumber: "",
       });
 
-      // Send email
-      console.log("sending email request to backend...");
+      // Send email notification
+      console.log("Sending email request to backend...");
       const response = await fetch("http://localhost:5000/api/send-confirmation-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -644,23 +642,22 @@ const handleAddTicket = async () => {
         }),
       });
 
-      console.log("Email API response status: ", response.status);
-      const responseData = await response.json;
-      console.log("Email API response data: ", responseData)
+      console.log("Email API response status:", response.status);
+      const responseData = await response.json();
+      console.log("Email API response data:", responseData);
       
       if (!response.ok) throw new Error("Failed to send confirmation email");
 
       alert(`Ticket created successfully! Email sent to ${recipientEmail}`);
     } catch (error) {
-      console.error("Error in handleAddTicket ", error)
+      console.error("Error in handleAddTicket:", error);
       alert(`Error: ${error.message}`);
     }
   } else {
-    alert(
-      "Please fill in all fields: Title, Description, Department, and IP Number."
-    );
+    alert("Please fill in all fields: Title, Description, Department, and IP Number.");
   }
 };
+
 
 const handleDownloadTickets = async () => {
   try {

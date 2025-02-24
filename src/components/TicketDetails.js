@@ -310,6 +310,19 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
     { id: "2508", name: "Alice", ipPhone: "2508", specialization: "software" },
     { id: "2509", name: "Bob", ipPhone: "2509", specialization: "network" },
   ]);
+  
+  const technicianEmailMap = {
+    "2507": "ryanedinson@gmail.com",
+    "2508": "alice@example.com",
+    "2509": "bob@example.com",
+  };
+
+  const ipToEmailMap = {
+    "2507": "ryanedinson@gmail.com",
+    "2508": "alice@example.com",
+    "2509": "bob@example.com",
+    // Add more mappings as needed
+  };
 
   useEffect(() => {
     if (!ticketId) return;
@@ -331,47 +344,134 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
     fetchTicket();
   }, [db, ticketId]);
 
-  const handleUpdate = (status) => {
+  const handleUpdate = async (status) => {
     const updates = { status, timestamp: Date.now() };
     const activityLog = ticket.activityLog ? [...ticket.activityLog] : [];
-
+  
     switch (status) {
       case "Assigned":
         if (assignedTechnician) {
-          updates.assignedTo = assignedTechnician;
-          const actionMessage = `Assigned to ${technicians.find(t => t.id === assignedTechnician)?.name} (${assignedTechnician}) at ${new Date().toLocaleString()}`;
-          activityLog.push(
-            `${actionMessage}${newAssignmentDetails ? ` (Reason: ${newAssignmentDetails})` : ""}`
-          );
+          const technician = technicians.find((t) => t.id === assignedTechnician);
+          const technicianEmail = technicianEmailMap[assignedTechnician];
+  
+          if (technician) {
+            updates.assignedTo = assignedTechnician;
+            const actionMessage = `Assigned to ${technician.name} (${assignedTechnician}) at ${new Date().toLocaleString()}`;
+            activityLog.push(
+              `${actionMessage}${newAssignmentDetails ? ` (Reason: ${newAssignmentDetails})` : ""}`
+            );
+          }
+  
           setNewAssignmentDetails("");
+  
+          // ✅ Send email to technician
+          if (technicianEmail) {
+            try {
+              console.log(`Sending assignment email to ${technicianEmail}...`);
+              const response = await fetch("http://localhost:5000/api/send-assignment-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  email: technicianEmail,
+                  title: ticket.title,
+                  description: ticket.description,
+                  department: ticket.department,
+                  ipNumber: ticket.ipNumber,
+                }),
+              });
+  
+              const responseData = await response.json();
+              console.log("Assignment email API response:", responseData);
+  
+              if (!response.ok) {
+                throw new Error(responseData.error || "Failed to send assignment email");
+              }
+  
+              alert(`Ticket assigned successfully! Email sent to ${technicianEmail}`);
+            } catch (error) {
+              console.error("Error sending assignment email:", error);
+              alert("Ticket assigned, but failed to send email notification.");
+            }
+          } else {
+            console.warn("Technician email not found, skipping email notification.");
+          }
         }
         break;
-
+  
       case "Escalated":
         if (escalationDetails) {
           updates.escalationDetails = escalationDetails;
-          activityLog.push(`Escalated by ${technicians.find(t => t.id === loggedInTechnicianId)?.name} at ${new Date().toLocaleString()}: ${escalationDetails}`);
+          activityLog.push(
+            `Escalated by ${technicians.find((t) => t.id === loggedInTechnicianId)?.name} at ${new Date().toLocaleString()}: ${escalationDetails}`
+          );
           setEscalationDetails("");
         }
         break;
-
+  
       case "Resolved":
         if (resolutionDetails) {
           updates.resolutionDetails = resolutionDetails;
-          activityLog.push(`Resolved by ${technicians.find(t => t.id === loggedInTechnicianId)?.name} at ${new Date().toLocaleString()}: ${resolutionDetails}`);
+          activityLog.push(
+            `Resolved by ${technicians.find((t) => t.id === loggedInTechnicianId)?.name} at ${new Date().toLocaleString()}: ${resolutionDetails}`
+          );
           setResolutionDetails("");
+  
+          // ✅ Determine user email from `ipNumber`
+          let userEmail = ticket.ipNumber; // Assume it's an email
+          if (ipToEmailMap[ticket.ipNumber]) {
+            userEmail = ipToEmailMap[ticket.ipNumber]; // Map IP to email
+          } else if (!/\S+@\S+\.\S+/.test(userEmail)) {
+            console.warn("⚠️ Invalid email format found in ipNumber. Skipping resolution email.");
+            userEmail = null;
+          }
+  
+          console.log("User email for resolution notification:", userEmail);
+  
+          // ✅ Send resolution email if valid email is found
+          if (userEmail) {
+            try {
+              console.log(`Sending resolution email to ${userEmail}...`);
+              const response = await fetch("http://localhost:5000/api/send-resolution-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  email: userEmail,
+                  title: ticket.title,
+                  resolutionDetails,
+                }),
+              });
+  
+              const responseData = await response.json();
+              console.log("Resolution email API response:", responseData);
+  
+              if (!response.ok) {
+                throw new Error(responseData.error || "Failed to send resolution email");
+              }
+  
+              alert(`Ticket resolved successfully! Email sent to ${userEmail}`);
+            } catch (error) {
+              console.error("Error sending resolution email:", error);
+              alert("Ticket resolved, but failed to send email notification.");
+            }
+          } else {
+            console.warn("⚠️ User email not found in ipNumber mapping, skipping email notification.");
+          }
         }
         break;
-
+  
       default:
         console.error(`Unknown status: ${status}`);
         break;
     }
-
+  
     updates.activityLog = activityLog;
-    update(ref(db, `tickets/${ticket.id}`), updates);
+    await update(ref(db, `tickets/${ticket.id}`), updates);
     setTicket((prev) => ({ ...prev, ...updates }));
   };
+  
+  
+  
+  
 
   const handleGenerateReport = (ticketId) => {
     const doc = new jsPDF({
