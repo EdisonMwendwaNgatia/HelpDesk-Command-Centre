@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { getDatabase, ref, get, push, onValue } from "firebase/database";
+import { getDatabase, ref, get, set, onValue } from "firebase/database";
 import { useNavigate } from "react-router-dom";
 import styled, { keyframes, createGlobalStyle } from "styled-components";
 import "../firebase/firebaseConfig";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { v4 as uuidv4 } from "uuid"; // Import UUID (optional)
 
 // Global Styles
 const GlobalStyle = createGlobalStyle`
@@ -582,7 +583,7 @@ const Dashboard = () => {
 
   // IP-to-Email Mapping
 const ipToEmailMap = {
-  "2507": "linah@yahoo.co.ke",
+  "2507": "ryanedinson@gmail.com",
   "2399": "cindy@gmail.com",
   // Add more mappings as needed
 };
@@ -610,9 +611,13 @@ const handleAddTicket = async () => {
 
       console.log("Final recipient email:", recipientEmail);
 
-      // Push ticket to Firebase
+      // Generate a short unique ticket ID
+      const ticketId = uuidv4().slice(0, 6); // Example: "A1B2C3"
+
+      // Push ticket to Firebase with short ID
       console.log("Pushing ticket to Firebase...");
-      await push(ref(db, "tickets"), {
+      await set(ref(db, `tickets/${ticketId}`), {
+        id: ticketId, // Store the short ID
         title: newTicket.title,
         description: newTicket.description,
         department: newTicket.department,
@@ -620,7 +625,7 @@ const handleAddTicket = async () => {
         status: "Pending",
         timestamp: Date.now(),
       });
-      console.log("Ticket successfully stored in Firebase");
+      console.log("Ticket successfully stored in Firebase with ID:", ticketId);
 
       // Clear form
       setNewTicket({
@@ -639,6 +644,7 @@ const handleAddTicket = async () => {
           email: recipientEmail,
           title: newTicket.title,
           description: newTicket.description,
+          ticketId: ticketId, // Include ticket ID in the email
         }),
       });
 
@@ -648,7 +654,7 @@ const handleAddTicket = async () => {
       
       if (!response.ok) throw new Error("Failed to send confirmation email");
 
-      alert(`Ticket created successfully! Email sent to ${recipientEmail}`);
+      alert(`Ticket created successfully! ID: ${ticketId}, Email sent to ${recipientEmail}`);
     } catch (error) {
       console.error("Error in handleAddTicket:", error);
       alert(`Error: ${error.message}`);
@@ -657,7 +663,6 @@ const handleAddTicket = async () => {
     alert("Please fill in all fields: Title, Description, Department, and IP Number.");
   }
 };
-
 
 const handleDownloadTickets = async () => {
   try {
