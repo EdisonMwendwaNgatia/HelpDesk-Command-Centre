@@ -539,6 +539,37 @@ const Icons = {
       />
     </svg>
   ),
+  Urgency: () => (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12 9V13"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 17.01L12.01 16.999"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.9999 3.43994L3.20987 17.0399C2.95141 17.4896 2.94517 18.0499 3.19355 18.5054C3.44194 18.961 3.91255 19.25 4.42987 19.25H19.5699C20.0872 19.25 20.5578 18.961 20.8062 18.5054C21.0546 18.0499 21.0483 17.4896 20.7899 17.0399L13.0099 3.43994C12.7507 2.98285 12.2603 2.71191 11.7299 2.71875C11.1995 2.72559 10.7184 3.00978 10.4699 3.47494"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
 };
 
 //add departments here
@@ -558,6 +589,7 @@ const Dashboard = () => {
     description: "",
     department: "",
     ipNumber: "",
+    urgency: "",
   });
   const [tickets, setTickets] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -582,152 +614,161 @@ const Dashboard = () => {
   }, [db]);
 
   // IP-to-Email Mapping
-const ipToEmailMap = {
-  "2507": "ryanedinson@gmail.com",
-  "2399": "cindy@gmail.com",
-  // Add more mappings as needed
-};
+  const ipToEmailMap = {
+    2507: "ryanedinson@gmail.com",
+    2399: "cindy@gmail.com",
+    // Add more mappings as needed
+  };
 
-// Helper function to validate email format
-const isEmail = (input) => /\S+@\S+\.\S+/.test(input);
+  // Helper function to validate email format
+  const isEmail = (input) => /\S+@\S+\.\S+/.test(input);
 
-const handleAddTicket = async () => {
-  if (
-    newTicket.title &&
-    newTicket.description &&
-    newTicket.department &&
-    newTicket.ipNumber
-  ) {
-    try {
-      console.log("Creating a new ticket with details:", newTicket);
-      let recipientEmail = newTicket.ipNumber;
+  const handleAddTicket = async () => {
+    if (
+      newTicket.title &&
+      newTicket.description &&
+      newTicket.department &&
+      newTicket.ipNumber
+    ) {
+      try {
+        console.log("Creating a new ticket with details:", newTicket);
+        let recipientEmail = newTicket.ipNumber;
 
-      // Check if the input is an IP number and map it to an email
-      if (ipToEmailMap[newTicket.ipNumber]) {
-        recipientEmail = ipToEmailMap[newTicket.ipNumber]; // Get mapped email
-      } else if (!isEmail(newTicket.ipNumber)) {
-        throw new Error("Invalid IP Number or Email");
-      }
+        // Check if the input is an IP number and map it to an email
+        if (ipToEmailMap[newTicket.ipNumber]) {
+          recipientEmail = ipToEmailMap[newTicket.ipNumber]; // Get mapped email
+        } else if (!isEmail(newTicket.ipNumber)) {
+          throw new Error("Invalid IP Number or Email");
+        }
 
-      console.log("Final recipient email:", recipientEmail);
+        console.log("Final recipient email:", recipientEmail);
 
-      // Generate a short unique ticket ID
-      const ticketId = uuidv4().slice(0, 6); // Example: "A1B2C3"
+        // Generate a short unique ticket ID
+        const ticketId = uuidv4().slice(0, 6); // Example: "A1B2C3"
 
-      // Push ticket to Firebase with short ID
-      console.log("Pushing ticket to Firebase...");
-      await set(ref(db, `tickets/${ticketId}`), {
-        id: ticketId, // Store the short ID
-        title: newTicket.title,
-        description: newTicket.description,
-        department: newTicket.department,
-        ipNumber: newTicket.ipNumber, // Store IP or Email
-        status: "Pending",
-        timestamp: Date.now(),
-      });
-      console.log("Ticket successfully stored in Firebase with ID:", ticketId);
-
-      // Clear form
-      setNewTicket({
-        title: "",
-        description: "",
-        department: "",
-        ipNumber: "",
-      });
-
-      // Send email notification
-      console.log("Sending email request to backend...");
-      const response = await fetch("http://localhost:5000/api/send-confirmation-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: recipientEmail,
+        // Push ticket to Firebase with short ID
+        console.log("Pushing ticket to Firebase...");
+        await set(ref(db, `tickets/${ticketId}`), {
+          id: ticketId, // Store the short ID
           title: newTicket.title,
           description: newTicket.description,
-          ticketId: ticketId, // Include ticket ID in the email
-        }),
+          department: newTicket.department,
+          ipNumber: newTicket.ipNumber, // Store IP or Email
+          urgency: newTicket.urgency,
+          status: "Pending",
+          timestamp: Date.now(),
+        });
+        console.log(
+          "Ticket successfully stored in Firebase with ID:",
+          ticketId
+        );
+
+        // Clear form
+        setNewTicket({
+          title: "",
+          description: "",
+          department: "",
+          ipNumber: "",
+          urgency: "",
+        });
+
+        // Send email notification
+        console.log("Sending email request to backend...");
+        const response = await fetch(
+          "http://localhost:5000/api/send-confirmation-email",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: recipientEmail,
+              title: newTicket.title,
+              description: newTicket.description,
+              ticketId: ticketId, // Include ticket ID in the email
+            }),
+          }
+        );
+
+        console.log("Email API response status:", response.status);
+        const responseData = await response.json();
+        console.log("Email API response data:", responseData);
+
+        if (!response.ok) throw new Error("Failed to send confirmation email");
+
+        alert(
+          `Ticket created successfully! ID: ${ticketId}, Email sent to ${recipientEmail}`
+        );
+      } catch (error) {
+        console.error("Error in handleAddTicket:", error);
+        alert(`Error: ${error.message}`);
+      }
+    } else {
+      alert(
+        "Please fill in all fields: Title, Description, Department, and IP Number."
+      );
+    }
+  };
+
+  const handleDownloadTickets = async () => {
+    try {
+      const snapshot = await get(ref(db, "tickets"));
+
+      if (!snapshot.exists()) {
+        alert("No tickets found");
+        return;
+      }
+
+      const tickets = snapshot.val();
+      const ticketArray = Object.keys(tickets).map((key) => ({
+        ipNumber: tickets[key].ipNumber,
+        problem: tickets[key].title,
+        description: tickets[key].description,
+        status: tickets[key].status,
+      }));
+
+      // Group tickets by status
+      const groupedTickets = ticketArray.reduce((acc, ticket) => {
+        acc[ticket.status] = acc[ticket.status] || [];
+        acc[ticket.status].push(ticket);
+        return acc;
+      }, {});
+
+      // Generate PDF
+      generatePDF(groupedTickets);
+    } catch (error) {
+      alert("Error fetching tickets: " + error.message);
+    }
+  };
+
+  const generatePDF = (data) => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Tickets Report", 14, 15);
+
+    let yPos = 25;
+
+    Object.keys(data).forEach((status) => {
+      doc.setFontSize(14);
+      doc.text(`Status: ${status}`, 14, yPos);
+      yPos += 6;
+
+      const tableData = data[status].map((ticket) => [
+        ticket.ipNumber,
+        ticket.problem,
+        ticket.description,
+      ]);
+
+      doc.autoTable({
+        startY: yPos,
+        head: [["IP Phone", "Problem", "Description"]],
+        body: tableData,
+        theme: "grid",
       });
 
-      console.log("Email API response status:", response.status);
-      const responseData = await response.json();
-      console.log("Email API response data:", responseData);
-      
-      if (!response.ok) throw new Error("Failed to send confirmation email");
-
-      alert(`Ticket created successfully! ID: ${ticketId}, Email sent to ${recipientEmail}`);
-    } catch (error) {
-      console.error("Error in handleAddTicket:", error);
-      alert(`Error: ${error.message}`);
-    }
-  } else {
-    alert("Please fill in all fields: Title, Description, Department, and IP Number.");
-  }
-};
-
-const handleDownloadTickets = async () => {
-  try {
-    const snapshot = await get(ref(db, "tickets"));
-
-    if (!snapshot.exists()) {
-      alert("No tickets found");
-      return;
-    }
-
-    const tickets = snapshot.val();
-    const ticketArray = Object.keys(tickets).map((key) => ({
-      ipNumber: tickets[key].ipNumber,
-      problem: tickets[key].title,
-      description: tickets[key].description,
-      status: tickets[key].status,
-    }));
-
-    // Group tickets by status
-    const groupedTickets = ticketArray.reduce((acc, ticket) => {
-      acc[ticket.status] = acc[ticket.status] || [];
-      acc[ticket.status].push(ticket);
-      return acc;
-    }, {});
-
-    // Generate PDF
-    generatePDF(groupedTickets);
-  } catch (error) {
-    alert("Error fetching tickets: " + error.message);
-  }
-};
-
-const generatePDF = (data) => {
-  const doc = new jsPDF();
-  doc.setFontSize(18);
-  doc.text("Tickets Report", 14, 15);
-
-  let yPos = 25;
-
-  Object.keys(data).forEach((status) => {
-    doc.setFontSize(14);
-    doc.text(`Status: ${status}`, 14, yPos);
-    yPos += 6;
-
-    const tableData = data[status].map((ticket) => [
-      ticket.ipNumber,
-      ticket.problem,
-      ticket.description,
-    ]);
-
-    doc.autoTable({
-      startY: yPos,
-      head: [["IP Phone", "Problem", "Description"]],
-      body: tableData,
-      theme: "grid",
+      yPos = doc.autoTable.previous.finalY + 10;
     });
 
-    yPos = doc.autoTable.previous.finalY + 10;
-  });
-
-  doc.save("tickets_report.pdf");
-};
-
-
-
+    doc.save("tickets_report.pdf");
+  };
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
@@ -741,7 +782,8 @@ const generatePDF = (data) => {
         <Header>
           <Title>Helpdesk Command Center</Title>
           <Button onClick={handleDownloadTickets}>
-            Download Tickets as PDF</Button>
+            Download Tickets as PDF
+          </Button>
         </Header>
 
         <FormSection>
@@ -786,6 +828,20 @@ const generatePDF = (data) => {
                 setNewTicket({ ...newTicket, ipNumber: e.target.value })
               }
             />
+            <Select
+              value={newTicket.urgency}
+              onChange={(e) =>
+                setNewTicket({ ...newTicket, urgency: e.target.value })
+              }
+            >
+              <option value="" disabled>
+                Select Urgency Level
+              </option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </Select>
           </FormGrid>
           <Button onClick={handleAddTicket}>
             <Icons.Add /> Create Ticket
@@ -846,6 +902,10 @@ const generatePDF = (data) => {
                           <MetaTag>
                             <Icons.Globe />
                             {ticket.ipNumber}
+                          </MetaTag>
+                          <MetaTag>
+                            <Icons.Urgency />
+                            {ticket.urgency}
                           </MetaTag>
                           {ticket.assignedTo && (
                             <MetaTag>

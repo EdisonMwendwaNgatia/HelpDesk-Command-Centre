@@ -60,10 +60,10 @@ app.post("/api/send-confirmation-email", async (req, res) => {
 
 // NEW API Endpoint for Technician Assignment Emails
 app.post("/api/send-assignment-email", async (req, res) => {
-  const { email, title, description, department, ipNumber } = req.body;
-  console.log("Received technician assignment email request:", { email, title, description, department, ipNumber });
+  const { email, title, description, department, ipNumber, urgency } = req.body;
+  console.log("Received technician assignment email request:", { email, title, description, department, ipNumber, urgency });
 
-  if (!email || !title || !description || !department || !ipNumber) {
+  if (!email || !title || !description || !department || !ipNumber || !urgency) {
     console.error("Error: Missing required fields");
     return res.status(400).json({ error: "Missing required fields" });
   }
@@ -72,7 +72,7 @@ app.post("/api/send-assignment-email", async (req, res) => {
     from: process.env.EMAIL_FROM,
     to: email,
     subject: `New Ticket Assignment: ${title}`,
-    text: `Hello,\n\nYou have been assigned a new support ticket.\n\nTitle: ${title}\nDescription: ${description}\nDepartment: ${department}\nUser IP Number: ${ipNumber}\n\nPlease check your dashboard for more details.\n\nBest regards,\nHelpdesk Team`,
+    text: `Hello,\n\nYou have been assigned a new support ticket.\n\nTitle: ${title}\nDescription: ${description}\nDepartment: ${department}\nUser IP Number: ${ipNumber}\n Urgency Level: ${urgency}\n\nPlease contact Helpdesk (2508) for more details.\n\nBest regards,\nHelpdesk Team`,
   };
 
   try {

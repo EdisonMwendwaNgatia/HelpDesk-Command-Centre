@@ -377,6 +377,7 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
                   description: ticket.description,
                   department: ticket.department,
                   ipNumber: ticket.ipNumber,
+                  urgency: ticket.urgency,
                 }),
               });
   
