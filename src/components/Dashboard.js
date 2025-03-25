@@ -583,8 +583,50 @@ const departments = [
   "Operations",
 ];
 
+const categories = [
+  {
+    name: "Hardware",
+    subcategories: [
+      "Computer/Laptop - Performance",
+      "Computer/Laptop - Booting",
+      "Computer/Laptop - Keyboard",
+      "Computer/Laptop - Mouse",
+      "Computer/Laptop - Monitor",
+      "Computer/Laptop - Physical Damage",
+      "Printer/Scanner - Connectivity",
+      "Printer/Scanner - Paper Jam",
+      "Printer/Scanner - Print Quality",
+      "Printer/Scanner - Scanning Errors",
+      "Network Equipment - Cabling Problems",
+    ],
+  },
+  {
+    name: "Software",
+    subcategories: [
+      "Operating System - Errors/Crashes",
+      "Operating System - Updates",
+      "Operating System - Login Problems",
+      "Application Issues - Installation/Uninstallation",
+      "Application Issues - Errors/Bugs",
+      "Application Issues - Performance Issues",
+      "Application Issues - Licensing",
+      "Internet/Network - Connectivity",
+      "Internet/Network - Slow Speeds",
+      "Internet/Network - Website Access Problem",
+    ],
+  },
+  {
+    name: "Account Access",
+    subcategories: [
+      "Access Permission - Account Lockout"
+    ],
+  },
+];
+
 const Dashboard = () => {
   const [newTicket, setNewTicket] = useState({
+    category: "",
+    subcategory: "",
     title: "",
     description: "",
     department: "",
@@ -625,7 +667,8 @@ const Dashboard = () => {
 
   const handleAddTicket = async () => {
     if (
-      newTicket.title &&
+      newTicket.category &&
+      newTicket.subcategory &&
       newTicket.description &&
       newTicket.department &&
       newTicket.ipNumber
@@ -646,11 +689,13 @@ const Dashboard = () => {
         // Generate a short unique ticket ID
         const ticketId = uuidv4().slice(0, 6); // Example: "A1B2C3"
 
-        // Push ticket to Firebase with short ID
+        // Push ticket to Firebase with detailed categorization
         console.log("Pushing ticket to Firebase...");
         await set(ref(db, `tickets/${ticketId}`), {
           id: ticketId, // Store the short ID
-          title: newTicket.title,
+          category: newTicket.category, // Main category (Hardware, Software, Account Access)
+          subcategory: newTicket.subcategory, // Subcategory (e.g., Computer/Laptop)
+          title: newTicket.title, // Add missing title
           description: newTicket.description,
           department: newTicket.department,
           ipNumber: newTicket.ipNumber, // Store IP or Email
@@ -665,7 +710,8 @@ const Dashboard = () => {
 
         // Clear form
         setNewTicket({
-          title: "",
+          category: "",
+          subcategory: "",
           description: "",
           department: "",
           ipNumber: "",
@@ -681,7 +727,8 @@ const Dashboard = () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               email: recipientEmail,
-              title: newTicket.title,
+              category: newTicket.category,
+              subcategory: newTicket.subcategory,
               description: newTicket.description,
               ticketId: ticketId, // Include ticket ID in the email
             }),
@@ -703,7 +750,7 @@ const Dashboard = () => {
       }
     } else {
       alert(
-        "Please fill in all fields: Title, Description, Department, and IP Number."
+        "Please fill in all fields: Category, Subcategory, Description, Department, and IP Number."
       );
     }
   };
@@ -719,10 +766,16 @@ const Dashboard = () => {
 
       const tickets = snapshot.val();
       const ticketArray = Object.keys(tickets).map((key) => ({
-        ipNumber: tickets[key].ipNumber,
-        problem: tickets[key].title,
-        description: tickets[key].description,
-        status: tickets[key].status,
+        ipNumber: tickets[key].ipNumber || "N/A",
+        problem: tickets[key].title || "N/A",
+        description: tickets[key].description || "N/A",
+        department: tickets[key].department || "N/A",
+        category: tickets[key].category || "N/A",
+        subcategory: tickets[key].subcategory || "N/A",
+        timestamp: tickets[key].timestamp
+          ? new Date(tickets[key].timestamp).toLocaleString()
+          : "N/A",
+        status: tickets[key].status || "Pending",
       }));
 
       // Group tickets by status
@@ -753,13 +806,25 @@ const Dashboard = () => {
 
       const tableData = data[status].map((ticket) => [
         ticket.ipNumber,
-        ticket.problem,
+        ticket.department,
         ticket.description,
+        ticket.category,
+        ticket.subcategory,
+        ticket.timestamp,
       ]);
 
       doc.autoTable({
         startY: yPos,
-        head: [["IP Phone", "Problem", "Description"]],
+        head: [
+          [
+            "IP Phone",
+            "Department",
+            "Description",
+            "Category",
+            "Sub-Category",
+            "Reported Date",
+          ],
+        ],
         body: tableData,
         theme: "grid",
       });
@@ -771,8 +836,7 @@ const Dashboard = () => {
   };
 
   const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString();
+    return timestamp ? new Date(timestamp).toLocaleString() : "N/A";
   };
 
   return (
@@ -789,14 +853,44 @@ const Dashboard = () => {
         <FormSection>
           <TicketTitle>Create New Support Ticket</TicketTitle>
           <FormGrid>
-            <Input
-              type="text"
-              placeholder="Ticket Title"
-              value={newTicket.title}
+            <Select
+              value={newTicket.category}
               onChange={(e) =>
-                setNewTicket({ ...newTicket, title: e.target.value })
+                setNewTicket({
+                  ...newTicket,
+                  category: e.target.value,
+                  subcategory: "",
+                })
               }
-            />
+            >
+              <option value="" disabled>
+                Select Category
+              </option>
+              {categories.map((cat) => (
+                <option key={cat.name} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </Select>
+            {newTicket.category && (
+              <Select
+                value={newTicket.subcategory}
+                onChange={(e) =>
+                  setNewTicket({ ...newTicket, subcategory: e.target.value })
+                }
+              >
+                <option value="" disabled>
+                  Select Subcategory
+                </option>
+                {categories
+                  .find((cat) => cat.name === newTicket.category)
+                  ?.subcategories.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
+              </Select>
+            )}
             <Input
               type="text"
               placeholder="Description"
@@ -822,7 +916,7 @@ const Dashboard = () => {
             </Select>
             <Input
               type="text"
-              placeholder="IP Number"
+              placeholder="IP Number/ Email"
               value={newTicket.ipNumber}
               onChange={(e) =>
                 setNewTicket({ ...newTicket, ipNumber: e.target.value })
@@ -843,7 +937,17 @@ const Dashboard = () => {
               <option value="Critical">Critical</option>
             </Select>
           </FormGrid>
-          <Button onClick={handleAddTicket}>
+          <Button
+            onClick={handleAddTicket}
+            disabled={
+              !newTicket.category ||
+              !newTicket.subcategory ||
+              !newTicket.description ||
+              !newTicket.department ||
+              !newTicket.ipNumber ||
+              !newTicket.urgency
+            }
+          >
             <Icons.Add /> Create Ticket
           </Button>
         </FormSection>
@@ -890,9 +994,9 @@ const Dashboard = () => {
                         status={status}
                         onClick={() => navigate(`/ticket/${ticket.id}`)}
                       >
-                        <TicketTitle>{ticket.title}</TicketTitle>
+                        <TicketTitle>{ticket.category}</TicketTitle>
                         <TicketDescription>
-                          {ticket.description}
+                          {ticket.subcategory}
                         </TicketDescription>
                         <TicketMeta>
                           <MetaTag>

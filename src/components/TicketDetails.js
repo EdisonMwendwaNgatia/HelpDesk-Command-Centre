@@ -4,9 +4,18 @@ import { useParams } from "react-router-dom";
 import "../firebase/firebaseConfig";
 import jsPDF from "jspdf";
 import styled, { keyframes } from "styled-components";
-import { 
-  AlertCircle, CheckCircle, Clock, FileText, Download, 
-  User, ArrowUpCircle, Zap, Activity, Repeat, UserPlus
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  FileText,
+  Download,
+  User,
+  ArrowUpCircle,
+  Zap,
+  Activity,
+  Repeat,
+  UserPlus,
 } from "react-feather";
 
 // Animations
@@ -39,7 +48,7 @@ const Container = styled.div`
   animation: ${fadeIn} 0.5s ease-out;
   position: relative;
   overflow: hidden;
-  
+
   &::after {
     content: "";
     position: absolute;
@@ -62,7 +71,7 @@ const Header = styled.div`
 `;
 
 const Title = styled.h1`
-  font-family: 'Orbitron', sans-serif;
+  font-family: "Orbitron", sans-serif;
   background: linear-gradient(90deg, #00c6ff, #0072ff);
   -webkit-background-clip: text;
   background-clip: text;
@@ -75,7 +84,7 @@ const TicketId = styled.div`
   background: rgba(32, 156, 238, 0.2);
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   color: #20e4ff;
   display: flex;
   align-items: center;
@@ -93,20 +102,30 @@ const StatusBadge = styled.div`
   animation: ${pulse} 2s infinite;
   background-color: ${({ status }) => {
     switch (status) {
-      case "Pending": return "rgba(255, 186, 8, 0.2)";
-      case "Assigned": return "rgba(32, 156, 238, 0.2)";
-      case "Escalated": return "rgba(238, 32, 77, 0.2)";
-      case "Resolved": return "rgba(46, 204, 113, 0.2)";
-      default: return "rgba(255, 255, 255, 0.2)";
+      case "Pending":
+        return "rgba(255, 186, 8, 0.2)";
+      case "Assigned":
+        return "rgba(32, 156, 238, 0.2)";
+      case "Escalated":
+        return "rgba(238, 32, 77, 0.2)";
+      case "Resolved":
+        return "rgba(46, 204, 113, 0.2)";
+      default:
+        return "rgba(255, 255, 255, 0.2)";
     }
   }};
   color: ${({ status }) => {
     switch (status) {
-      case "Pending": return "#ffba08";
-      case "Assigned": return "#20e4ff";
-      case "Escalated": return "#ff5252";
-      case "Resolved": return "#2ecc71";
-      default: return "#ffffff";
+      case "Pending":
+        return "#ffba08";
+      case "Assigned":
+        return "#20e4ff";
+      case "Escalated":
+        return "#ff5252";
+      case "Resolved":
+        return "#2ecc71";
+      default:
+        return "#ffffff";
     }
   }};
 `;
@@ -127,7 +146,7 @@ const GridLayout = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -138,10 +157,10 @@ const ActionSection = styled.div`
   border-radius: 10px;
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border-left: 4px solid ${props => props.color || "#20e4ff"};
+  border-left: 4px solid ${(props) => props.color || "#20e4ff"};
   margin-bottom: 1.5rem;
   transition: all 0.3s ease;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
@@ -169,7 +188,7 @@ const SelectDropdown = styled.select`
   background-repeat: no-repeat;
   background-position: right 1rem center;
   background-size: 1em;
-  
+
   &:focus {
     outline: none;
     border-color: rgba(32, 228, 255, 0.8);
@@ -187,23 +206,25 @@ const TextArea = styled.textarea`
   min-height: 100px;
   margin-bottom: 1rem;
   resize: vertical;
-  font-family: 'Inter', sans-serif;
-  
+  font-family: "Inter", sans-serif;
+
   &:focus {
     outline: none;
     border-color: rgba(32, 228, 255, 0.8);
     box-shadow: 0 0 0 2px rgba(32, 228, 255, 0.2);
   }
-  
+
   &::placeholder {
     color: rgba(224, 247, 255, 0.4);
   }
 `;
 
 const Button = styled.button`
-  background: ${props => props.primary ? "linear-gradient(90deg, #0072ff, #00c6ff)" : "transparent"};
-  color: ${props => props.primary ? "#fff" : "#20e4ff"};
-  border: ${props => props.primary ? "none" : "1px solid rgba(32, 228, 255, 0.5)"};
+  background: ${(props) =>
+    props.primary ? "linear-gradient(90deg, #0072ff, #00c6ff)" : "transparent"};
+  color: ${(props) => (props.primary ? "#fff" : "#20e4ff")};
+  border: ${(props) =>
+    props.primary ? "none" : "1px solid rgba(32, 228, 255, 0.5)"};
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
   font-weight: 600;
@@ -212,13 +233,16 @@ const Button = styled.button`
   gap: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover:not(:disabled) {
-    background: ${props => props.primary ? "linear-gradient(90deg, #0072ff, #00d4ff)" : "rgba(32, 228, 255, 0.1)"};
+    background: ${(props) =>
+      props.primary
+        ? "linear-gradient(90deg, #0072ff, #00d4ff)"
+        : "rgba(32, 228, 255, 0.1)"};
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -232,7 +256,7 @@ const ActivityLogSection = styled.div`
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   margin-top: 2rem;
   position: relative;
-  
+
   &::before {
     content: "";
     position: absolute;
@@ -264,7 +288,7 @@ const ActivityLogEntry = styled.div`
   border-radius: 0 6px 6px 0;
   margin-bottom: 1rem;
   animation: ${fadeIn} 0.3s ease-out;
-  
+
   &::before {
     content: "";
     position: absolute;
@@ -288,7 +312,7 @@ const ActivityLogEntry = styled.div`
     background-color: rgba(32, 228, 255, 0.3);
     z-index: -1;
   }
-  
+
   &:last-child::after {
     display: none;
   }
@@ -310,17 +334,17 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
     { id: "2508", name: "Alice", ipPhone: "2508", specialization: "software" },
     { id: "2509", name: "Bob", ipPhone: "2509", specialization: "network" },
   ]);
-  
+
   const technicianEmailMap = {
-    "2507": "ryanedinson@gmail.com",
-    "2508": "alice@example.com",
-    "2509": "bob@example.com",
+    2507: "ryanedinson@gmail.com",
+    2508: "alice@example.com",
+    2509: "bob@example.com",
   };
 
   const ipToEmailMap = {
-    "2507": "ryanedinson@gmail.com",
-    "2508": "alice@example.com",
-    "2509": "bob@example.com",
+    2507: "ryanedinson@gmail.com",
+    2508: "alice@example.com",
+    2509: "bob@example.com",
     // Add more mappings as needed
   };
 
@@ -332,10 +356,14 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
       const snapshot = await get(ref(db, `tickets/${ticketId}`));
       if (snapshot.exists()) {
         const ticketData = snapshot.val();
-        setTicket({ 
-          id: ticketId, 
+        setTicket({
+          id: ticketId,
           ...ticketData,
-          activityLog: ticketData.activityLog || [`Ticket created at ${new Date(ticketData.timestamp).toLocaleString()}`]
+          activityLog: ticketData.activityLog || [
+            `Ticket created at ${new Date(
+              ticketData.timestamp
+            ).toLocaleString()}`,
+          ],
         });
       }
       setLoading(false);
@@ -347,358 +375,428 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
   const handleUpdate = async (status) => {
     const updates = { status, timestamp: Date.now() };
     const activityLog = ticket.activityLog ? [...ticket.activityLog] : [];
-  
+
     switch (status) {
       case "Assigned":
         if (assignedTechnician) {
-          const technician = technicians.find((t) => t.id === assignedTechnician);
+          const technician = technicians.find(
+            (t) => t.id === assignedTechnician
+          );
           const technicianEmail = technicianEmailMap[assignedTechnician];
-  
+
           if (technician) {
             updates.assignedTo = assignedTechnician;
-            const actionMessage = `Assigned to ${technician.name} (${assignedTechnician}) at ${new Date().toLocaleString()}`;
+            const actionMessage = `Assigned to ${
+              technician.name
+            } (${assignedTechnician}) at ${new Date().toLocaleString()}`;
             activityLog.push(
-              `${actionMessage}${newAssignmentDetails ? ` (Reason: ${newAssignmentDetails})` : ""}`
+              `${actionMessage}${
+                newAssignmentDetails ? ` (Reason: ${newAssignmentDetails})` : ""
+              }`
             );
           }
-  
+
           setNewAssignmentDetails("");
-  
+
           // ✅ Send email to technician
           if (technicianEmail) {
             try {
               console.log(`Sending assignment email to ${technicianEmail}...`);
-              const response = await fetch("http://localhost:5000/api/send-assignment-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  email: technicianEmail,
-                  title: ticket.title,
-                  description: ticket.description,
-                  department: ticket.department,
-                  ipNumber: ticket.ipNumber,
-                  urgency: ticket.urgency,
-                }),
-              });
-  
+              const response = await fetch(
+                "http://localhost:5000/api/send-assignment-email",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    email: technicianEmail,
+                    title: ticket.title,
+                    description: ticket.description,
+                    department: ticket.department,
+                    ipNumber: ticket.ipNumber,
+                    urgency: ticket.urgency,
+                  }),
+                }
+              );
+
               const responseData = await response.json();
               console.log("Assignment email API response:", responseData);
-  
+
               if (!response.ok) {
-                throw new Error(responseData.error || "Failed to send assignment email");
+                throw new Error(
+                  responseData.error || "Failed to send assignment email"
+                );
               }
-  
-              alert(`Ticket assigned successfully! Email sent to ${technicianEmail}`);
+
+              alert(
+                `Ticket assigned successfully! Email sent to ${technicianEmail}`
+              );
             } catch (error) {
               console.error("Error sending assignment email:", error);
               alert("Ticket assigned, but failed to send email notification.");
             }
           } else {
-            console.warn("Technician email not found, skipping email notification.");
+            console.warn(
+              "Technician email not found, skipping email notification."
+            );
           }
         }
         break;
-  
+
       case "Escalated":
         if (escalationDetails) {
           updates.escalationDetails = escalationDetails;
           activityLog.push(
-            `Escalated by ${technicians.find((t) => t.id === loggedInTechnicianId)?.name} at ${new Date().toLocaleString()}: ${escalationDetails}`
+            `Escalated by ${
+              technicians.find((t) => t.id === loggedInTechnicianId)?.name
+            } at ${new Date().toLocaleString()}: ${escalationDetails}`
           );
           setEscalationDetails("");
         }
         break;
-  
+
       case "Resolved":
         if (resolutionDetails) {
           updates.resolutionDetails = resolutionDetails;
           activityLog.push(
-            `Resolved by ${technicians.find((t) => t.id === loggedInTechnicianId)?.name} at ${new Date().toLocaleString()}: ${resolutionDetails}`
+            `Resolved by ${
+              technicians.find((t) => t.id === loggedInTechnicianId)?.name
+            } at ${new Date().toLocaleString()}: ${resolutionDetails}`
           );
           setResolutionDetails("");
-  
+
           // ✅ Determine user email from `ipNumber`
           let userEmail = ticket.ipNumber; // Assume it's an email
           if (ipToEmailMap[ticket.ipNumber]) {
             userEmail = ipToEmailMap[ticket.ipNumber]; // Map IP to email
           } else if (!/\S+@\S+\.\S+/.test(userEmail)) {
-            console.warn("⚠️ Invalid email format found in ipNumber. Skipping resolution email.");
+            console.warn(
+              "⚠️ Invalid email format found in ipNumber. Skipping resolution email."
+            );
             userEmail = null;
           }
-  
+
           console.log("User email for resolution notification:", userEmail);
-  
+
           // ✅ Send resolution email if valid email is found
           if (userEmail) {
             try {
               console.log(`Sending resolution email to ${userEmail}...`);
-              const response = await fetch("http://localhost:5000/api/send-resolution-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  email: userEmail,
-                  title: ticket.title,
-                  resolutionDetails,
-                }),
-              });
-  
+              const response = await fetch(
+                "http://localhost:5000/api/send-resolution-email",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    email: userEmail,
+                    title: ticket.title,
+                    resolutionDetails,
+                  }),
+                }
+              );
+
               const responseData = await response.json();
               console.log("Resolution email API response:", responseData);
-  
+
               if (!response.ok) {
-                throw new Error(responseData.error || "Failed to send resolution email");
+                throw new Error(
+                  responseData.error || "Failed to send resolution email"
+                );
               }
-  
+
               alert(`Ticket resolved successfully! Email sent to ${userEmail}`);
             } catch (error) {
               console.error("Error sending resolution email:", error);
               alert("Ticket resolved, but failed to send email notification.");
             }
           } else {
-            console.warn("⚠️ User email not found in ipNumber mapping, skipping email notification.");
+            console.warn(
+              "⚠️ User email not found in ipNumber mapping, skipping email notification."
+            );
           }
         }
         break;
-  
+
       default:
         console.error(`Unknown status: ${status}`);
         break;
     }
-  
+
     updates.activityLog = activityLog;
     await update(ref(db, `tickets/${ticket.id}`), updates);
     setTicket((prev) => ({ ...prev, ...updates }));
   };
-  
-  
-  
-  
 
-  const handleGenerateReport = (ticketId) => {
+  const handleGenerateReport = (ticket) => {
+    if (!ticket) {
+      alert("Ticket not found!");
+      return;
+    }
+
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
-      format: "a4"
+      format: "a4",
     });
-  
+
     // Document styling variables
     const primaryColor = [0, 114, 255];
     const secondaryColor = [0, 198, 255];
     const darkBg = [10, 25, 41];
     const lightText = [224, 247, 255];
-    
-    // Add background
-    doc.setFillColor(darkBg[0], darkBg[1], darkBg[2]);
-    doc.rect(0, 0, 210, 297, 'F');
-    
-    // Add header gradient bar
-    const addGradientHeader = () => {
-      for (let i = 0; i < 6; i++) {
-        const ratio = i / 5;
-        const r = primaryColor[0] * (1 - ratio) + secondaryColor[0] * ratio;
-        const g = primaryColor[1] * (1 - ratio) + secondaryColor[1] * ratio;
-        const b = primaryColor[2] * (1 - ratio) + secondaryColor[2] * ratio;
-        doc.setFillColor(r, g, b);
-        doc.rect(i * 35, 0, 35, 8, 'F');
-      }
-    };
-    addGradientHeader();
+    const subtleGray = [180, 180, 180];
 
-    // Add icons using custom drawIcon function
-    const drawIcon = (iconType, x, y, size = 5) => {
-      doc.setDrawColor(lightText[0], lightText[1], lightText[2]);
-      doc.setLineWidth(0.2);
-    };
-    
-    // Add company logo/title with icon
-    doc.setFillColor(lightText[0], lightText[1], lightText[2]);
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    drawIcon('info', 70, 12, 8);
-    doc.text("COMMAND CENTER", 105, 20, { align: "center" });
-    
-    // Add report title with ticket icon
-    doc.setFontSize(18);
-    doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    drawIcon('ticket', 70, 22, 8);
-    doc.text("TICKET SUPPORT REPORT", 105, 30, { align: "center" });
-    
-    // Add ticket ID badge
-    doc.setFillColor(5, 15, 30);
-    doc.roundedRect(65, 35, 80, 10, 2, 2, 'F');
-    doc.setFontSize(10);
-    doc.setTextColor(0, 228, 255);
-    doc.text(`TICKET #${ticket.id}`, 105, 42, { align: "center" });
-    
-    // Add timestamp with clock icon
-    drawIcon('clock', 85, 43, 4);
-    doc.setFontSize(8);
-    doc.setTextColor(180, 180, 180);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 48, { align: "center" });
-    
-    // Add ticket details section
-    doc.setDrawColor(32, 228, 255);
+    // Add background
+    doc.setFillColor(...darkBg);
+    doc.rect(0, 0, 210, 297, "F");
+
+    // Header gradient bar - smoother gradient with more steps
+    for (let i = 0; i < 12; i++) {
+      const ratio = i / 11;
+      const r = primaryColor[0] * (1 - ratio) + secondaryColor[0] * ratio;
+      const g = primaryColor[1] * (1 - ratio) + secondaryColor[1] * ratio;
+      const b = primaryColor[2] * (1 - ratio) + secondaryColor[2] * ratio;
+      doc.setFillColor(r, g, b);
+      doc.rect(i * 17.5, 0, 17.5, 8, "F");
+    }
+
+    // Add decorative elements
+    doc.setDrawColor(...secondaryColor);
     doc.setLineWidth(0.5);
-    doc.line(20, 55, 190, 55);
-    
-    doc.setFontSize(14);
-    doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    drawIcon('info', 20, 57, 6);
-    doc.text("TICKET INFORMATION", 30, 62);
-    
-    // Add ticket details in a stylized box
-    doc.setFillColor(5, 15, 30);
-    doc.roundedRect(20, 65, 170, 50, 2, 2, 'F');
-    
-    // Status badge with enhanced styling
-    const getStatusColor = (status) => {
-      switch(status) {
-        case "Pending": return [255, 186, 8];
-        case "Assigned": return [32, 228, 255];
-        case "Escalated": return [255, 82, 82];
-        case "Resolved": return [46, 204, 113];
-        default: return [255, 255, 255];
-      }
-    };
-    
-    const statusColor = getStatusColor(ticket.status);
-    doc.setFillColor(statusColor[0], statusColor[1], statusColor[2], 0.2);
-    doc.roundedRect(150, 67, 35, 8, 4, 4, 'F');
-    doc.setFontSize(8);
-    doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
-    doc.text(ticket.status.toUpperCase(), 167.5, 72.5, { align: "center" });
-    
-    // Add ticket details with icons
-    doc.setFontSize(10);
-    doc.setTextColor(lightText[0], lightText[1], lightText[2]);
-    
-    // Detail labels with icons
+    doc.line(20, 53, 190, 53);
+
+    // Title section
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(24);
     doc.setFont("helvetica", "bold");
-    drawIcon('ticket', 20, 72, 4);
-    doc.text("Title:", 25, 75);
-    doc.text("Description:", 25, 85);
-    drawIcon('user', 20, 102, 4);
-    doc.text("Assigned to:", 25, 105);
-    
-    // Detail values
-    doc.setFont("helvetica", "normal");
-    doc.text(ticket.title, 55, 75);
-    
-    // Handle multi-line description with proper wrapping
-    const splitDescription = doc.splitTextToSize(ticket.description, 130);
-    doc.text(splitDescription, 55, 85);
-    
-    // Add assigned technician info
-    if (ticket.assignedTo) {
-      const techInfo = technicians.find(t => t.id === ticket.assignedTo);
-      if (techInfo) {
-        doc.text(`${techInfo.name} (${techInfo.specialization})`, 55, 105);
-      } else {
-        doc.text(ticket.assignedTo, 55, 105);
-      }
-    } else {
-      doc.text("Unassigned", 55, 105);
-    }
-    
-    // Activity log section with improved spacing
+    doc.text("COMMAND CENTER", 105, 20, { align: "center" });
+
+    doc.setFontSize(18);
+    doc.setTextColor(...secondaryColor);
+    doc.text("TICKET SUPPORT REPORT", 105, 30, { align: "center" });
+
+    // Ticket ID Badge - improved styling
+    doc.setFillColor(5, 15, 30);
+    doc.roundedRect(55, 35, 100, 12, 3, 3, "F");
+    doc.setFontSize(11);
+    doc.setTextColor(0, 228, 255);
+    doc.text(`TICKET #${ticket.id}`, 105, 43, { align: "center" });
+
+    // Timestamp - better formatting
+    doc.setFontSize(8);
+    doc.setTextColor(...subtleGray);
+    const timestampDate = ticket.timestamp
+      ? new Date(ticket.timestamp)
+      : new Date();
+    const formattedDate = timestampDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const formattedTime = timestampDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    doc.text(`Generated: ${formattedDate} at ${formattedTime}`, 105, 48, {
+      align: "center",
+    });
+
+    // Ticket Information section with better spacing
     doc.setFontSize(14);
-    doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    drawIcon('clock', 20, 125, 6);
-    doc.text("ACTIVITY LOG", 30, 130);
-    
-    // Calculate available space for activity log
-    const availableHeight = 260 - 135; // Space between activity log start and footer
-    const entryHeight = 15; // Height per entry
-    const maxEntries = Math.floor(availableHeight / entryHeight);
-    
-    // Handle pagination if needed
-    const timelineStartY = 135;
-    const timelineX = 25;
-    
-    const drawActivityLog = (entries, startIndex) => {
-      entries.forEach((log, index) => {
-        const entryY = timelineStartY + (index * entryHeight);
-        
-        // Draw timeline
-        doc.setDrawColor(32, 228, 255, 0.4);
-        doc.setLineWidth(0.5);
-        doc.line(timelineX, entryY, timelineX, entryY + entryHeight);
-        
-        // Draw node
-        doc.setFillColor(32, 228, 255);
-        doc.circle(timelineX, entryY, 1.5, 'F');
-        
-        // Entry background
-        if (index % 2 === 0) {
-          doc.setFillColor(5, 15, 30);
-          doc.roundedRect(timelineX + 5, entryY - 4, 165, 8, 1, 1, 'F');
-        }
-        
-        // Entry text with color coding
-        let textColor = [224, 247, 255];
-        if (log.includes("Assigned to")) textColor = [32, 228, 255];
-        else if (log.includes("Escalated")) textColor = [255, 82, 82];
-        else if (log.includes("Resolved")) textColor = [46, 204, 113];
-        else if (log.includes("created")) textColor = [255, 186, 8];
-        
-        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-        doc.setFontSize(9);
-        
-        // Wrap long log entries
-        const logText = `${startIndex + index + 1}. ${log}`;
-        const splitLog = doc.splitTextToSize(logText, 155);
-        doc.text(splitLog, timelineX + 8, entryY);
-      });
-    };
-    
-    // Split activity log into pages if needed
-    const totalPages = Math.ceil(ticket.activityLog.length / maxEntries);
-    
-    for (let page = 0; page < totalPages; page++) {
-      if (page > 0) {
-        doc.addPage();
-        addGradientHeader();
-        doc.setFillColor(darkBg[0], darkBg[1], darkBg[2]);
-        doc.rect(0, 8, 210, 297, 'F');
-      }
-      
-      const startIndex = page * maxEntries;
-      const endIndex = Math.min((page + 1) * maxEntries, ticket.activityLog.length);
-      const pageEntries = ticket.activityLog.slice(startIndex, endIndex);
-      
-      drawActivityLog(pageEntries, startIndex);
-      
-      // Add footer
-      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.setLineWidth(0.8);
-      doc.line(20, 270, 190, 270);
-      
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text("CONFIDENTIAL - INTERNAL USE ONLY", 105, 277, { align: "center" });
-      doc.text(`Support Command Center • Page ${page + 1} of ${totalPages}`, 105, 282, { align: "center" });
-      
-      // Tech pattern
-      const drawTechPattern = () => {
-        doc.setDrawColor(20, 228, 255, 0.2);
-        doc.setLineWidth(0.2);
-        for (let i = 0; i < 8; i++) {
-          doc.line(160 + i*4, 290, 180 + i*2, 270);
-        }
-      };
-      drawTechPattern();
+    doc.setTextColor(...secondaryColor);
+    doc.text("TICKET INFORMATION", 30, 62);
+
+    // Info panel with subtle gradient
+    const panelY = 65;
+    const panelHeight = 50;
+    doc.setFillColor(5, 15, 30);
+    doc.roundedRect(20, panelY, 170, panelHeight, 3, 3, "F");
+
+    // Add subtle gradient to the panel
+    doc.setGState(new doc.GState({ opacity: 0.1 }));
+    for (let i = 0; i < panelHeight; i += 2) {
+      const ratio = i / panelHeight;
+      doc.setFillColor(...primaryColor, 0.05 - ratio * 0.05);
+      doc.rect(20, panelY + i, 170, 2, "F");
     }
-    
-    // Save the PDF
-    doc.save(`ticket_${ticket.id}_report.pdf`);
-};
+    doc.setGState(new doc.GState({ opacity: 1.0 }));
+
+    // Status Badge with improved styling
+    const statusColors = {
+      Pending: [255, 186, 8],
+      Assigned: [32, 228, 255],
+      Escalated: [255, 82, 82],
+      Resolved: [46, 204, 113],
+      Closed: [160, 160, 160],
+    };
+    const statusColor = statusColors[ticket.status] || [255, 255, 255];
+
+    // Status badge with glow effect
+    doc.setFillColor(...statusColor, 0.1);
+    doc.roundedRect(145, 67, 40, 10, 5, 5, "F");
+    doc.setFillColor(...statusColor, 0.2);
+    doc.roundedRect(146, 68, 38, 8, 4, 4, "F");
+    doc.setFontSize(9);
+    doc.setTextColor(...statusColor);
+    doc.setFont("helvetica", "bold");
+    doc.text(ticket.status.toUpperCase(), 165, 73.5, { align: "center" });
+
+    // Ticket Details with better layout
+    doc.setFontSize(10);
+    doc.setTextColor(...lightText);
+    doc.setFont("helvetica", "bold");
+
+    const leftCol = 25;
+    const rightCol = 65;
+    const startY = 75;
+    const lineHeight = 10;
+
+    // Left column
+    doc.text("Category:", leftCol, startY);
+    doc.text("Subcategory:", leftCol, startY + lineHeight);
+    doc.text("Department:", leftCol, startY + lineHeight * 2);
+    doc.text("Assigned to:", leftCol, startY + lineHeight * 3);
+
+    // Right column
+    doc.setFont("helvetica", "normal");
+    doc.text(ticket.category || "No Category", rightCol, startY);
+    doc.text(
+      ticket.subcategory || "No Subcategory",
+      rightCol,
+      startY + lineHeight
+    );
+    doc.text(
+      ticket.department || "No Department",
+      rightCol,
+      startY + lineHeight * 2
+    );
+    doc.text(
+      ticket.assignedTo || "Unassigned",
+      rightCol,
+      startY + lineHeight * 3
+    );
+
+    // Activity Log Section with improved styling
+    doc.setFontSize(14);
+    doc.setTextColor(...secondaryColor);
+    doc.text("ACTIVITY LOG", 30, 130);
+
+    // Decorative line below section header
+    doc.setDrawColor(...secondaryColor);
+    doc.setLineWidth(0.3);
+    doc.line(30, 133, 100, 133);
+
+    // Activity Log Entries with better formatting
+    if (ticket.activityLog && ticket.activityLog.length > 0) {
+      doc.setFontSize(10);
+
+      let yPos = 140;
+      ticket.activityLog.forEach((logEntry, index) => {
+        if (yPos > 270) {
+          // New page when full with consistent styling
+          doc.addPage();
+
+          // Add background to new page
+          doc.setFillColor(...darkBg);
+          doc.rect(0, 0, 210, 297, "F");
+
+          // Add header to new page
+          doc.setTextColor(...secondaryColor);
+          doc.setFontSize(14);
+          doc.text("ACTIVITY LOG (CONTINUED)", 30, 15);
+          doc.setLineWidth(0.3);
+          doc.line(30, 18, 150, 18);
+
+          yPos = 30;
+        }
+
+        // Timestamp extraction if logEntry contains timestamp pattern
+        let timestamp = "";
+        let content = logEntry;
+        const timestampMatch = logEntry.match(
+          /\[\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}\]/
+        );
+
+        if (timestampMatch) {
+          timestamp = timestampMatch[0];
+          content = logEntry.replace(timestamp, "").trim();
+        }
+
+        // Entry background for better readability
+        const entryHeight = Math.ceil(doc.getTextDimensions(content).h) + 5;
+        doc.setFillColor(15, 35, 60, 0.3);
+        doc.roundedRect(25, yPos - 4, 160, entryHeight, 2, 2, "F");
+
+        // Log number with accent color
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...secondaryColor);
+        doc.text(`${index + 1}.`, 28, yPos);
+
+        // Timestamp in subtle color if available
+        if (timestamp) {
+          doc.setFont("helvetica", "italic");
+          doc.setTextColor(...subtleGray);
+          doc.text(timestamp, 35, yPos);
+
+          // Log content in normal text
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...lightText);
+          const wrappedText = doc.splitTextToSize(content, 145);
+          doc.text(wrappedText, 35, yPos + 5);
+          yPos += wrappedText.length * 5 + 7;
+        } else {
+          // Log content if no timestamp
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...lightText);
+          const wrappedText = doc.splitTextToSize(content, 150);
+          doc.text(wrappedText, 35, yPos);
+          yPos += wrappedText.length * 5 + 7;
+        }
+      });
+    } else {
+      doc.setFontSize(10);
+      doc.setTextColor(...lightText);
+      doc.text("No activity logs available.", 25, 140);
+    }
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+
+      // Footer line
+      doc.setDrawColor(...primaryColor, 0.5);
+      doc.setLineWidth(0.5);
+      doc.line(20, 280, 190, 280);
+
+      // Footer text
+      doc.setFontSize(8);
+      doc.setTextColor(...subtleGray);
+      doc.text(`Page ${i} of ${pageCount}`, 105, 286, { align: "center" });
+      doc.text("Command Center - Confidential", 20, 286);
+      doc.text(`Ticket #${ticket.id}`, 190, 286, { align: "right" });
+    }
+
+    // Save PDF with improved filename
+    const formattedId = ticket.id.toString().padStart(6, "0");
+    const fileDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    doc.save(`CC_Ticket_${formattedId}_${fileDate}.pdf`);
+  };
 
   if (loading) {
     return (
-      <Container style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-        <div style={{ textAlign: 'center' }}>
-          <Activity size={48} style={{ color: '#20e4ff', marginBottom: '1rem' }} />
+      <Container
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "60vh",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <Activity
+            size={48}
+            style={{ color: "#20e4ff", marginBottom: "1rem" }}
+          />
           <p>Loading ticket data...</p>
         </div>
       </Container>
@@ -708,8 +806,11 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
   if (!ticket) {
     return (
       <Container>
-        <div style={{ textAlign: 'center' }}>
-          <AlertCircle size={48} style={{ color: '#ff5252', marginBottom: '1rem' }} />
+        <div style={{ textAlign: "center" }}>
+          <AlertCircle
+            size={48}
+            style={{ color: "#ff5252", marginBottom: "1rem" }}
+          />
           <h2>Ticket Not Found</h2>
           <p>The requested ticket could not be located in the system.</p>
         </div>
@@ -718,50 +819,69 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
   }
 
   // Check if ticket is assigned to someone else and not in Pending state
-  const isAssignedToOther = ticket.assignedTo && ticket.assignedTo !== loggedInTechnicianId;
+  const isAssignedToOther =
+    ticket.assignedTo && ticket.assignedTo !== loggedInTechnicianId;
   const isPending = ticket.status === "Pending";
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "Pending": return <Clock />;
-      case "Assigned": return <User />;
-      case "Escalated": return <ArrowUpCircle />;
-      case "Resolved": return <CheckCircle />;
-      default: return <Activity />;
+      case "Pending":
+        return <Clock />;
+      case "Assigned":
+        return <User />;
+      case "Escalated":
+        return <ArrowUpCircle />;
+      case "Resolved":
+        return <CheckCircle />;
+      default:
+        return <Activity />;
     }
   };
 
   return (
     <Container>
       <Header>
-        <FileText size={24} style={{ color: '#20e4ff' }} />
+        <FileText size={24} style={{ color: "#20e4ff" }} />
         <Title>{ticket.title}</Title>
         <TicketId>
-          <Zap size={16} style={{ marginRight: '6px' }} />
+          <Zap size={16} style={{ marginRight: "6px" }} />
           ID: {ticket.id}
         </TicketId>
       </Header>
 
       <GridLayout>
         <DescriptionBox>
-          <h3 style={{ marginBottom: '10px', color: '#20e4ff' }}>Description</h3>
+          <h3 style={{ marginBottom: "10px", color: "#20e4ff" }}>
+            Description
+          </h3>
           <p>{ticket.description}</p>
         </DescriptionBox>
-        
+
         <div>
           <StatusBadge status={ticket.status}>
             {getStatusIcon(ticket.status)}
             {ticket.status}
           </StatusBadge>
-          
+
           {ticket.assignedTo && (
-            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <User size={16} style={{ color: '#20e4ff' }} />
+            <div
+              style={{
+                marginTop: "1rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <User size={16} style={{ color: "#20e4ff" }} />
               <span>
-                Assigned to: {technicians.find(t => t.id === ticket.assignedTo)?.name || ticket.assignedTo}
-                {" "}
-                <span style={{ opacity: 0.6, fontSize: '0.9rem' }}>
-                  ({technicians.find(t => t.id === ticket.assignedTo)?.specialization || "unknown"})
+                Assigned to:{" "}
+                {technicians.find((t) => t.id === ticket.assignedTo)?.name ||
+                  ticket.assignedTo}{" "}
+                <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>
+                  (
+                  {technicians.find((t) => t.id === ticket.assignedTo)
+                    ?.specialization || "unknown"}
+                  )
                 </span>
               </span>
             </div>
@@ -775,7 +895,7 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
             <UserPlus size={18} />
             Assign Ticket
           </ActionTitle>
-          
+
           <SelectDropdown
             value={assignedTechnician}
             onChange={(e) => setAssignedTechnician(e.target.value)}
@@ -787,8 +907,8 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
               </option>
             ))}
           </SelectDropdown>
-          
-          <Button 
+
+          <Button
             primary
             onClick={() => handleUpdate("Assigned")}
             disabled={!assignedTechnician}
@@ -796,18 +916,18 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
             <User size={16} />
             Assign Ticket
           </Button>
-          
-          <ActionTitle style={{ marginTop: '2rem' }}>
+
+          <ActionTitle style={{ marginTop: "2rem" }}>
             <ArrowUpCircle size={18} />
             Escalate Ticket
           </ActionTitle>
-          
+
           <TextArea
             placeholder="Escalation details..."
             value={escalationDetails}
             onChange={(e) => setEscalationDetails(e.target.value)}
           />
-          
+
           <Button
             onClick={() => handleUpdate("Escalated")}
             disabled={!escalationDetails}
@@ -826,8 +946,8 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
                 <Repeat size={18} />
                 Reassign Ticket
               </ActionTitle>
-              
-              <SelectDropdown 
+
+              <SelectDropdown
                 onChange={(e) => setAssignedTechnician(e.target.value)}
               >
                 <option value="">Select New Technician</option>
@@ -837,13 +957,13 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
                   </option>
                 ))}
               </SelectDropdown>
-              
+
               <TextArea
                 placeholder="Reason for reassignment..."
                 value={newAssignmentDetails}
                 onChange={(e) => setNewAssignmentDetails(e.target.value)}
               />
-              
+
               <Button
                 onClick={() => handleUpdate("Assigned")}
                 disabled={!assignedTechnician}
@@ -860,13 +980,13 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
                 <ArrowUpCircle size={18} />
                 Escalate Ticket
               </ActionTitle>
-              
+
               <TextArea
                 placeholder="Escalation details..."
                 value={escalationDetails}
                 onChange={(e) => setEscalationDetails(e.target.value)}
               />
-              
+
               <Button
                 onClick={() => handleUpdate("Escalated")}
                 disabled={!escalationDetails}
@@ -882,13 +1002,13 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
               <CheckCircle size={18} />
               Resolve Ticket
             </ActionTitle>
-            
+
             <TextArea
               placeholder="Resolution details..."
               value={resolutionDetails}
               onChange={(e) => setResolutionDetails(e.target.value)}
             />
-            
+
             <Button
               primary
               onClick={() => handleUpdate("Resolved")}
@@ -900,37 +1020,36 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
           </ActionSection>
 
           <ActionSection color="#20e4ff">
-              <ActionTitle>
-                <Repeat size={18} />
-                Reassign Ticket
-              </ActionTitle>
-              
-              <SelectDropdown 
-                onChange={(e) => setAssignedTechnician(e.target.value)}
-              >
-                <option value="">Select New Technician</option>
-                {technicians.map((tech) => (
-                  <option key={tech.id} value={tech.id}>
-                    {tech.name} ({tech.specialization} - {tech.ipPhone})
-                  </option>
-                ))}
-              </SelectDropdown>
-              
-              <TextArea
-                placeholder="Reason for reassignment..."
-                value={newAssignmentDetails}
-                onChange={(e) => setNewAssignmentDetails(e.target.value)}
-              />
-              
-              <Button
-                onClick={() => handleUpdate("Assigned")}
-                disabled={!assignedTechnician}
-              >
-                <Repeat size={16} />
-                Reassign
-              </Button>
-            </ActionSection>
+            <ActionTitle>
+              <Repeat size={18} />
+              Reassign Ticket
+            </ActionTitle>
 
+            <SelectDropdown
+              onChange={(e) => setAssignedTechnician(e.target.value)}
+            >
+              <option value="">Select New Technician</option>
+              {technicians.map((tech) => (
+                <option key={tech.id} value={tech.id}>
+                  {tech.name} ({tech.specialization} - {tech.ipPhone})
+                </option>
+              ))}
+            </SelectDropdown>
+
+            <TextArea
+              placeholder="Reason for reassignment..."
+              value={newAssignmentDetails}
+              onChange={(e) => setNewAssignmentDetails(e.target.value)}
+            />
+
+            <Button
+              onClick={() => handleUpdate("Assigned")}
+              disabled={!assignedTechnician}
+            >
+              <Repeat size={16} />
+              Reassign
+            </Button>
+          </ActionSection>
         </GridLayout>
       )}
 
@@ -940,13 +1059,13 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
             <CheckCircle size={18} />
             Resolve Ticket
           </ActionTitle>
-          
+
           <TextArea
             placeholder="Resolution details..."
             value={resolutionDetails}
             onChange={(e) => setResolutionDetails(e.target.value)}
           />
-          
+
           <Button
             primary
             onClick={() => handleUpdate("Resolved")}
@@ -959,11 +1078,11 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
       )}
 
       {ticket.status === "Resolved" && (
-        <ActionSection color="#20e4ff" style={{ textAlign: 'center' }}>
-          <Button 
+        <ActionSection color="#20e4ff" style={{ textAlign: "center" }}>
+          <Button
             primary
-            onClick={() => handleGenerateReport(ticket.id)}
-            style={{ margin: '0 auto' }}
+            onClick={() => handleGenerateReport(ticket)}
+            style={{ margin: "0 auto" }}
           >
             <Download size={16} />
             Generate Report
@@ -976,12 +1095,10 @@ const TicketDetails = ({ generateReport, loggedInTechnicianId }) => {
           <Activity size={18} />
           Ticket Activity Log
         </ActivityLogHeader>
-        
+
         <div>
           {ticket.activityLog?.map((log, index) => (
-            <ActivityLogEntry key={index}>
-              {log}
-            </ActivityLogEntry>
+            <ActivityLogEntry key={index}>{log}</ActivityLogEntry>
           ))}
         </div>
       </ActivityLogSection>

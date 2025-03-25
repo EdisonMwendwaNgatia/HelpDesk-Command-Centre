@@ -32,10 +32,10 @@ const transporter = nodemailer.createTransport({
 
 // API Endpoint to Send Emails
 app.post("/api/send-confirmation-email", async (req, res) => {
-  const { email, title, description } = req.body;
-  console.log("Received email request:", { email, title, description });
+  const { email, category, description } = req.body;
+  console.log("Received email request:", { email, category, description });
 
-  if (!email || !title || !description) {
+  if (!email || !category || !description) {
     console.error("Error: Missing required fields");
     return res.status(400).json({ error: "Missing required fields" });
   }
@@ -43,8 +43,8 @@ app.post("/api/send-confirmation-email", async (req, res) => {
   const mailOptions = {
     from: process.env.EMAIL_FROM, // Verified sender email
     to: email,
-    subject: `Support Ticket Confirmation: ${title}`,
-    text: `Hello,\n\nYour support ticket has been created.\n\nTitle: ${title}\nDescription: ${description}\n\nWe will get back to you shortly.\n\nBest regards,\nHelpdesk Team`,
+    subject: `Support Ticket Confirmation: ${category}`,
+    text: `Hello,\n\nYour support ticket has been created.\n\nCategory: ${category}\nDescription: ${description}\n\nWe will get back to you shortly.\n\nBest regards,\nHelpdesk Team`,
   };
 
   try {
@@ -58,12 +58,13 @@ app.post("/api/send-confirmation-email", async (req, res) => {
   }
 });
 
+
 // NEW API Endpoint for Technician Assignment Emails
 app.post("/api/send-assignment-email", async (req, res) => {
-  const { email, title, description, department, ipNumber, urgency } = req.body;
-  console.log("Received technician assignment email request:", { email, title, description, department, ipNumber, urgency });
+  const { email, category, description, department, ipNumber, urgency } = req.body;
+  console.log("Received technician assignment email request:", { email, category, description, department, ipNumber, urgency });
 
-  if (!email || !title || !description || !department || !ipNumber || !urgency) {
+  if (!email || !category || !description || !department || !ipNumber || !urgency) {
     console.error("Error: Missing required fields");
     return res.status(400).json({ error: "Missing required fields" });
   }
@@ -71,8 +72,8 @@ app.post("/api/send-assignment-email", async (req, res) => {
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: email,
-    subject: `New Ticket Assignment: ${title}`,
-    text: `Hello,\n\nYou have been assigned a new support ticket.\n\nTitle: ${title}\nDescription: ${description}\nDepartment: ${department}\nUser IP Number: ${ipNumber}\n Urgency Level: ${urgency}\n\nPlease contact Helpdesk (2508) for more details.\n\nBest regards,\nHelpdesk Team`,
+    subject: `New Ticket Assignment: ${category}`,
+    text: `Hello,\n\nYou have been assigned a new support ticket.\n\nCategory: ${category}\nDescription: ${description}\nDepartment: ${department}\nUser IP Number: ${ipNumber}\nUrgency Level: ${urgency}\n\nPlease contact Helpdesk (2508) for more details.\n\nBest regards,\nHelpdesk Team`,
   };
 
   try {
@@ -86,12 +87,13 @@ app.post("/api/send-assignment-email", async (req, res) => {
   }
 });
 
+
 //resolved API user endpoint
 app.post("/api/send-resolution-email", async (req, res) => {
-  const { email, title, resolutionDetails } = req.body;
-  console.log("Received resolution email request:", { email, title, resolutionDetails });
+  const { email, category, resolutionDetails } = req.body;
+  console.log("Received resolution email request:", { email, category, resolutionDetails });
 
-  if (!email || !title || !resolutionDetails) {
+  if (!email || !category || !resolutionDetails) {
     console.error("Error: Missing required fields");
     return res.status(400).json({ error: "Missing required fields" });
   }
@@ -99,8 +101,8 @@ app.post("/api/send-resolution-email", async (req, res) => {
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: email,
-    subject: `Your Support Ticket "${title}" Has Been Resolved`,
-    text: `Hello,\n\nThank you for your patience. Your support ticket has been resolved.\n\nTitle: ${title}\nResolution: ${resolutionDetails}\n\nIf you have any further questions, feel free to reach out.\n\nBest regards,\nHelpdesk Team`,
+    subject: `Your Support Ticket ("${category}") Has Been Resolved`,
+    text: `Hello,\n\nThank you for your patience. Your support ticket has been resolved.\n\nCategory: ${category}\nResolution: ${resolutionDetails}\n\nIf you have any further questions, feel free to reach out.\n\nBest regards,\nHelpdesk Team`,
   };
 
   try {
@@ -113,6 +115,7 @@ app.post("/api/send-resolution-email", async (req, res) => {
     res.status(500).json({ error: "Failed to send resolution email", details: error.message });
   }
 });
+
 
 // Start server
 app.listen(PORT, () => {
